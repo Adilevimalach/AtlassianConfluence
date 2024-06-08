@@ -18,5 +18,8 @@ if (!pageId) {
   process.exit(1);
 }
 
-// Call the delete function with the provided page ID
+/**
+ * node deletePageById.mjs {YOUR_PAGE_ID}
+ * Call the delete function with the provided page ID
+ */
 deletePageById(pageId);

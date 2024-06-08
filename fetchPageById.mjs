@@ -8,11 +8,12 @@ import { makeApiRequest } from './utils/request.mjs';
  * @returns {Promise<void>} A Promise that resolves when the page is fetched.
  * @throws {Error} If there is an error fetching the page.
  */
-const fetchPageById = async (id) => {
+export const fetchPageById = async (id) => {
   const path = `/wiki/rest/api/content/${id}`;
   try {
     const response = await makeApiRequest(path);
     console.log('Fetched page:', response);
+    return response;
   } catch (error) {
     console.error('Error fetching page:', error.message);
   }
@@ -26,6 +27,8 @@ if (!pageId) {
   console.error('Please provide a page ID as an argument');
   process.exit(1);
 }
-
-// Call the fetch function with the provided page ID
+/**
+ * node fetchPageById.mjs {YOUR_PAGE_ID}
+ * Call the fetch function with the provided page ID
+ */
 fetchPageById(pageId);
