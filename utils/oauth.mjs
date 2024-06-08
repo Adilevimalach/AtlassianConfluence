@@ -55,6 +55,18 @@ const handleAuthCallback = (reqUrl, res) => {
         try {
           const tokenResponse = JSON.parse(tokenData);
           const accessToken = tokenResponse.access_token;
+          const expiresIn = tokenResponse.expires_in; // Expiration time in seconds
+
+          // Calculate the expiration time in milliseconds
+          const tokenExpirationTime = Date.now() + expiresIn * 1000;
+
+          // Save the access token and expiration time in config.mjs
+          config.accessToken = accessToken;
+          config.tokenExpirationTime = tokenExpirationTime;
+          writeFileSync(
+            './config.mjs',
+            `export const config = ${JSON.stringify(config, null, 2)};`
+          );
           console.log('Access Token:', accessToken);
 
           res.writeHead(200, { 'Content-Type': 'text/plain' });
