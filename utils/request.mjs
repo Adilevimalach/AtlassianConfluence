@@ -37,7 +37,12 @@ export const makeApiRequest = (path, method = 'GET', data = null) => {
         console.log(`Response: ${res.statusCode} ${res.statusMessage}`);
         console.log('Response Headers:', res.headers);
         console.log('Response Body:', responseData);
-        if (
+
+        if (res.statusCode === 204) {
+          // No content to parse, resolve with a message
+          console.log('Page successfully deleted');
+          resolve('Page successfully deleted');
+        } else if (
           res.headers['content-type'] &&
           res.headers['content-type'].includes('application/json')
         ) {
