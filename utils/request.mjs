@@ -2,28 +2,35 @@ import https from 'https';
 import { config } from '../config.mjs';
 
 /**
- * Makes an API request.
+ * Makes an API request to the Atlassian Confluence API using OAuth2.
  *
  * @param {string} path - The API endpoint path.
  * @param {string} [method='GET'] - The HTTP method for the request.
  * @param {Object} [data=null] - The data to send with the request.
+ * @param {Object} [headers={}] - Additional headers for the request.
  * @returns {Promise} A promise that resolves with the response data.
  */
-export const makeApiRequest = (path, method = 'GET', data = null) => {
-  const { apiToken, email, baseURL } = config;
-
+export const makeApiRequest = (
+  path,
+  method = 'GET',
+  data = null,
+  headers = {}
+) => {
+  // Construct the full request URL
+  const fullPath = `/ex/confluence/${config.cloudId}${path}`;
   const options = {
-    hostname: new URL(baseURL).hostname,
-    path,
+    hostname: 'api.atlassian.com',
+    path: fullPath,
     method,
     headers: {
-      Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString(
-        'base64'
-      )}`,
+      Authorization: `Bearer ${config.accessToken}`,
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...headers,
     },
   };
+
+  console.log('Request Options:', options);
 
   return new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
@@ -39,9 +46,7 @@ export const makeApiRequest = (path, method = 'GET', data = null) => {
         console.log('Response Body:', responseData);
 
         if (res.statusCode === 204) {
-          // No content to parse, resolve with a message
-          console.log('Page successfully deleted');
-          resolve('Page successfully deleted');
+          resolve('No content');
         } else if (
           res.headers['content-type'] &&
           res.headers['content-type'].includes('application/json')

@@ -25,30 +25,28 @@ const authorizationUrl = `https://auth.atlassian.com/authorize?audience=api.atla
  * @param {string} accessToken - The access token.
  * @param {number} expiresIn - The token expiration time in seconds.
  */
-const saveTokenConfig = (accessToken, expiresIn) => {
+const saveTokenConfig = (accessToken, expiresIn, cloudid) => {
   const tokenExpirationTime = Date.now() + expiresIn * 1000;
   process.env.ACCESS_TOKEN = accessToken;
   process.env.TOKEN_EXPIRATION_TIME = tokenExpirationTime.toString();
-
-  // Load the existing .env file
+  process.env.CLOUD_ID = cloudid;
+  console.log('cloudid:', cloudid);
   const envConfig = readFileSync('.env', 'utf8')
     .split('\n')
     .reduce((obj, line) => {
       const [key, value] = line.split('=');
-      obj[key.trim()] = value.trim();
+      if (key && value) obj[key.trim()] = value.trim();
       return obj;
     }, {});
 
-  // Update the desired properties
   envConfig.ACCESS_TOKEN = process.env.ACCESS_TOKEN;
   envConfig.TOKEN_EXPIRATION_TIME = process.env.TOKEN_EXPIRATION_TIME;
+  envConfig.CLOUD_ID = process.env.CLOUD_ID;
 
-  // Convert the updated object back to a string
   const updatedConfig = Object.entries(envConfig)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
 
-  // Write the updated string back to the .env file
   writeFileSync('.env', updatedConfig);
 };
 
@@ -63,9 +61,7 @@ const handleTokenResponse = (res, tokenData, tokenRes) => {
     try {
       const tokenResponse = JSON.parse(tokenData);
       console.log('Token Response:', tokenResponse);
-      saveTokenConfig(tokenResponse.access_token, tokenResponse.expires_in);
-      res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end('OAuth flow completed. You can now close this window.');
+      getCloudId(tokenResponse.access_token, tokenResponse.expires_in, res);
     } catch (error) {
       console.error('Failed to parse JSON response:', error.message);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -80,6 +76,61 @@ const handleTokenResponse = (res, tokenData, tokenRes) => {
     res.writeHead(500, { 'Content-Type': 'text/plain' });
     res.end('Failed to retrieve access token.');
   }
+};
+
+/**
+ * Retrieves the cloud ID for the site.
+ * @param {string} accessToken - The access token.
+ * @param {number} expiresIn - The token expiration time in seconds.
+ * @param {Object} res - The response object.
+ */
+const getCloudId = (accessToken, expiresIn, res) => {
+  const options = {
+    hostname: 'api.atlassian.com',
+    path: '/oauth/token/accessible-resources',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+    },
+  };
+
+  const req = https.request(options, (cloudRes) => {
+    let cloudData = '';
+    cloudRes.on('data', (chunk) => {
+      cloudData += chunk;
+    });
+    cloudRes.on('end', () => {
+      if (cloudRes.statusCode >= 200 && cloudRes.statusCode < 300) {
+        try {
+          const cloudResponse = JSON.parse(cloudData);
+          console.log('Cloud Response:', cloudResponse);
+          const cloudid = cloudResponse[0].id; // Assuming the first resource is your target site
+          saveTokenConfig(accessToken, expiresIn, cloudid);
+          res.writeHead(200, { 'Content-Type': 'text/plain' });
+          res.end('OAuth flow completed. You can now close this window.');
+        } catch (error) {
+          console.error('Failed to parse JSON response:', error.message);
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end('Failed to parse JSON response.');
+        }
+      } else {
+        console.error(
+          'Failed to retrieve cloud ID:',
+          cloudRes.statusCode,
+          cloudData
+        );
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Failed to retrieve cloud ID.');
+      }
+    });
+  });
+
+  req.on('error', (e) => {
+    console.error(`Problem with cloud ID request: ${e.message}`);
+  });
+
+  req.end();
 };
 
 /**
@@ -135,11 +186,7 @@ const createServer = () => {
     .listen(3000, () => {
       console.log('Server started on http://localhost:3000');
       exec(`start "" "${authorizationUrl}"`, (error) => {
-        if (error) {
-          console.error(`Could not open browser: ${error.message}`);
-        } else {
-          console.log('Opening default browser for OAuth authorization...');
-        }
+        if (error) console.error(`Could not open browser: ${error.message}`);
       });
     });
 };

@@ -5,11 +5,10 @@ const loadEnvVariables = () => {
     .split('\n')
     .reduce((obj, line) => {
       const [key, value] = line.split('=');
-      obj[key] = value;
+      if (key && value) obj[key.trim()] = value.trim();
       return obj;
     }, {});
 
-  // Load the environment variables into process.env
   for (const [key, value] of Object.entries(envConfig)) {
     process.env[key] = value;
   }
@@ -25,4 +24,5 @@ export const config = {
   username: process.env.USERNAME,
   tokenExpirationTime: process.env.TOKEN_EXPIRATION_TIME,
   accessToken: process.env.ACCESS_TOKEN,
+  cloudId: process.env.CLOUD_ID,
 };
