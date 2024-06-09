@@ -12,42 +12,56 @@ const state = crypto.randomBytes(16).toString('hex');
 /**
  * The authorization URL used for OAuth authentication.
  */
-const authorizationUrl = `https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=${
-  config.clientId
+const authorizationUrl = `${
+  config.AUTHORIZATION_URL
+}?audience=api.atlassian.com&client_id=${
+  config.CLIENT_ID
 }&scope=${encodeURIComponent(
-  'read:confluence-content.all read:confluence-user read:confluence-groups write:confluence-groups write:confluence-space write:confluence-content write:confluence-props'
+  'offline_access read:confluence-content.all read:confluence-user read:confluence-groups write:confluence-groups write:confluence-space write:confluence-content write:confluence-props'
 )}&redirect_uri=${encodeURIComponent(
-  config.redirectUri
+  config.REDIRECT_URI
 )}&state=${state}&response_type=code&prompt=consent`;
 
 /**
- * Saves the access token and expiration time to the environment file.
- * @param {string} accessToken - The access token.
- * @param {number} expiresIn - The token expiration time in seconds.
+ * Parses the .env file and returns the configuration as an object.
+ * @returns {Object} The environment configuration.
  */
-const saveTokenConfig = (accessToken, expiresIn, cloudid) => {
-  const tokenExpirationTime = Date.now() + expiresIn * 1000;
-  process.env.ACCESS_TOKEN = accessToken;
-  process.env.TOKEN_EXPIRATION_TIME = tokenExpirationTime.toString();
-  process.env.CLOUD_ID = cloudid;
-  console.log('cloudid:', cloudid);
-  const envConfig = readFileSync('.env', 'utf8')
+const readEnvConfig = () => {
+  return readFileSync('.env', 'utf8')
     .split('\n')
     .reduce((obj, line) => {
       const [key, value] = line.split('=');
       if (key && value) obj[key.trim()] = value.trim();
       return obj;
     }, {});
+};
 
-  envConfig.ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-  envConfig.TOKEN_EXPIRATION_TIME = process.env.TOKEN_EXPIRATION_TIME;
-  envConfig.CLOUD_ID = process.env.CLOUD_ID;
-
-  const updatedConfig = Object.entries(envConfig)
+/**
+ * Saves the provided configuration to the .env file.
+ * @param {Object} config - The configuration to save.
+ */
+const saveEnvConfig = (config) => {
+  const updatedConfig = Object.entries(config)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
-
   writeFileSync('.env', updatedConfig);
+};
+
+/**
+ * Updates the .env file with new tokens and cloud ID.
+ * @param {string} accessToken - The access token.
+ * @param {string} refreshToken - The refresh token.
+ * @param {number} expiresIn - The token expiration time in seconds.
+ * @param {string} cloudId - The cloud ID.
+ */
+const updateEnvConfig = (accessToken, refreshToken, expiresIn, cloudId) => {
+  const tokenExpirationTime = Date.now() + expiresIn * 1000;
+  const envConfig = readEnvConfig();
+  envConfig.ACCESS_TOKEN = accessToken;
+  envConfig.REFRESH_TOKEN = refreshToken;
+  envConfig.TOKEN_EXPIRATION_TIME = tokenExpirationTime.toString();
+  envConfig.CLOUD_ID = cloudId;
+  saveEnvConfig(envConfig);
 };
 
 /**
@@ -61,7 +75,12 @@ const handleTokenResponse = (res, tokenData, tokenRes) => {
     try {
       const tokenResponse = JSON.parse(tokenData);
       console.log('Token Response:', tokenResponse);
-      getCloudId(tokenResponse.access_token, tokenResponse.expires_in, res);
+      getCloudId(
+        tokenResponse.access_token,
+        tokenResponse.refresh_token,
+        tokenResponse.expires_in,
+        res
+      );
     } catch (error) {
       console.error('Failed to parse JSON response:', error.message);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -81,10 +100,11 @@ const handleTokenResponse = (res, tokenData, tokenRes) => {
 /**
  * Retrieves the cloud ID for the site.
  * @param {string} accessToken - The access token.
+ * @param {string} refreshToken - The refresh token.
  * @param {number} expiresIn - The token expiration time in seconds.
  * @param {Object} res - The response object.
  */
-const getCloudId = (accessToken, expiresIn, res) => {
+const getCloudId = (accessToken, refreshToken, expiresIn, res) => {
   const options = {
     hostname: 'api.atlassian.com',
     path: '/oauth/token/accessible-resources',
@@ -105,8 +125,8 @@ const getCloudId = (accessToken, expiresIn, res) => {
         try {
           const cloudResponse = JSON.parse(cloudData);
           console.log('Cloud Response:', cloudResponse);
-          const cloudid = cloudResponse[0].id; // Assuming the first resource is your target site
-          saveTokenConfig(accessToken, expiresIn, cloudid);
+          const cloudId = cloudResponse[0].id; // Assuming the first entry is the required cloud ID
+          updateEnvConfig(accessToken, refreshToken, expiresIn, cloudId);
           res.writeHead(200, { 'Content-Type': 'text/plain' });
           res.end('OAuth flow completed. You can now close this window.');
         } catch (error) {
@@ -134,7 +154,7 @@ const getCloudId = (accessToken, expiresIn, res) => {
 };
 
 /**
- * Creates an HTTP server to handle OAuth callback.
+ * Creates an HTTP server and handles OAuth callback requests.
  */
 const createServer = () => {
   http
@@ -146,10 +166,10 @@ const createServer = () => {
         const { code } = reqUrl.query;
         const postData = JSON.stringify({
           grant_type: 'authorization_code',
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
+          client_id: config.CLIENT_ID,
+          client_secret: config.CLIENT_SECRET,
           code,
-          redirect_uri: config.redirectUri,
+          redirect_uri: config.REDIRECT_URI,
         });
 
         const options = {
@@ -183,8 +203,8 @@ const createServer = () => {
         res.end('Not Found');
       }
     })
-    .listen(3000, () => {
-      console.log('Server started on http://localhost:3000');
+    .listen(config.PORT, () => {
+      console.log(`Server started on http://localhost${config.PORT}`);
       exec(`start "" "${authorizationUrl}"`, (error) => {
         if (error) console.error(`Could not open browser: ${error.message}`);
       });

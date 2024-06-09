@@ -17,12 +17,16 @@ const loadEnvVariables = () => {
 loadEnvVariables();
 
 export const config = {
-  baseURL: process.env.BASE_URL,
-  clientId: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
-  redirectUri: process.env.REDIRECT_URI,
-  username: process.env.USERNAME,
-  tokenExpirationTime: process.env.TOKEN_EXPIRATION_TIME,
-  accessToken: process.env.ACCESS_TOKEN,
-  cloudId: process.env.CLOUD_ID,
+  BASE_URL: process.env.BASE_URL,
+  CLIENT_ID: process.env.CLIENT_ID,
+  CLIENT_SECRET: process.env.CLIENT_SECRET,
+  REDIRECT_URI: process.env.REDIRECT_URI,
+  USERNAME: process.env.USERNAME,
+  TOKEN_EXPIRATION_TIME: process.env.TOKEN_EXPIRATION_TIME,
+  ACCESS_TOKEN: process.env.ACCESS_TOKEN,
+  CLOUD_ID: process.env.CLOUD_ID,
+  REFRESH_TOKEN: process.env.REFRESH_TOKEN,
+  PORT: process.env.PORT,
+  AUTHORIZATION_URL: process.env.AUTHORIZATION_URL,
+  TOKEN_URL: process.env.TOKEN_URL,
 };
