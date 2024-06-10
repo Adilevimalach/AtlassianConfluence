@@ -17,7 +17,7 @@ const authorizationUrl = `${
 }?audience=api.atlassian.com&client_id=${
   config.CLIENT_ID
 }&scope=${encodeURIComponent(
-  'offline_access read:confluence-content.all read:confluence-user read:confluence-groups write:confluence-groups write:confluence-space write:confluence-content write:confluence-props'
+  'offline_access read:confluence-content.all read:confluence-user read:confluence-groups write:confluence-groups write:confluence-space write:confluence-content write:confluence-props read:confluence-content.permission read:confluence-content.summary'
 )}&redirect_uri=${encodeURIComponent(
   config.REDIRECT_URI
 )}&state=${state}&response_type=code&prompt=consent`;
@@ -178,7 +178,6 @@ const createServer = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Content-Length': postData.length,
           },
         };
 
