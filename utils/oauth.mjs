@@ -5,6 +5,7 @@ import { config } from '../config.mjs';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec } from 'child_process';
 import crypto from 'crypto';
+import { readEnvConfig, saveEnvConfig } from './configUtils.mjs';
 
 // Generate a secure random state value
 const state = crypto.randomBytes(16).toString('hex');
@@ -22,30 +23,30 @@ const authorizationUrl = `${
   config.REDIRECT_URI
 )}&state=${state}&response_type=code&prompt=consent`;
 
-/**
- * Parses the .env file and returns the configuration as an object.
- * @returns {Object} The environment configuration.
- */
-const readEnvConfig = () => {
-  return readFileSync('.env', 'utf8')
-    .split('\n')
-    .reduce((obj, line) => {
-      const [key, value] = line.split('=');
-      if (key && value) obj[key.trim()] = value.trim();
-      return obj;
-    }, {});
-};
+// /**
+//  * Parses the .env file and returns the configuration as an object.
+//  * @returns {Object} The environment configuration.
+//  */
+// const readEnvConfig = () => {
+//   return readFileSync('.env', 'utf8')
+//     .split('\n')
+//     .reduce((obj, line) => {
+//       const [key, value] = line.split('=');
+//       if (key && value) obj[key.trim()] = value.trim();
+//       return obj;
+//     }, {});
+// };
 
-/**
- * Saves the provided configuration to the .env file.
- * @param {Object} config - The configuration to save.
- */
-const saveEnvConfig = (config) => {
-  const updatedConfig = Object.entries(config)
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n');
-  writeFileSync('.env', updatedConfig);
-};
+// /**
+//  * Saves the provided configuration to the .env file.
+//  * @param {Object} config - The configuration to save.
+//  */
+// const saveEnvConfig = (config) => {
+//   const updatedConfig = Object.entries(config)
+//     .map(([key, value]) => `${key}=${value}`)
+//     .join('\n');
+//   writeFileSync('.env', updatedConfig);
+// };
 
 /**
  * Updates the .env file with new tokens and cloud ID.

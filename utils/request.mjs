@@ -1,6 +1,6 @@
 import https from 'https';
 import { config } from '../config.mjs';
-import fs from 'fs';
+import { saveEnvConfig } from './configUtils.mjs';
 
 /**
  * Refreshes the access token using the refresh token.
@@ -68,34 +68,6 @@ const refreshAccessToken = () => {
     req.write(postData);
     req.end();
   });
-};
-
-/**
- * Saves the provided configuration to the .env file.
- * @param {Object} config - The configuration to save.
- */
-const saveEnvConfig = (newConfig) => {
-  const envConfig = readEnvConfig();
-  const updatedConfig = { ...envConfig, ...newConfig };
-  const configString = Object.entries(updatedConfig)
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n');
-  fs.writeFileSync('.env', configString);
-};
-
-/**
- * Parses the .env file and returns the configuration as an object.
- * @returns {Object} The environment configuration.
- */
-const readEnvConfig = () => {
-  return fs
-    .readFileSync('.env', 'utf8')
-    .split('\n')
-    .reduce((obj, line) => {
-      const [key, value] = line.split('=');
-      if (key && value) obj[key.trim()] = value.trim();
-      return obj;
-    }, {});
 };
 
 /**
