@@ -2,91 +2,61 @@ import http from 'http';
 import https from 'https';
 import url from 'url';
 import { config } from '../config.mjs';
-import { readFileSync, writeFileSync } from 'fs';
 import { exec } from 'child_process';
 import crypto from 'crypto';
-import { readEnvConfig, saveEnvConfig } from './configUtils.mjs';
-
-// Generate a secure random state value
-const state = crypto.randomBytes(16).toString('hex');
+import { updateEnvConfig } from './configUtils.mjs';
 
 /**
- * The authorization URL used for OAuth authentication.
+ * Generates a secure random state value for OAuth authentication.
+ * @returns {string} The state value.
  */
-const authorizationUrl = `${
-  config.AUTHORIZATION_URL
-}?audience=api.atlassian.com&client_id=${
-  config.CLIENT_ID
-}&scope=${encodeURIComponent(
-  'offline_access read:confluence-content.all read:confluence-user read:confluence-groups write:confluence-groups write:confluence-space write:confluence-content write:confluence-props read:confluence-content.permission read:confluence-content.summary'
-)}&redirect_uri=${encodeURIComponent(
-  config.REDIRECT_URI
-)}&state=${state}&response_type=code&prompt=consent`;
-
-// /**
-//  * Parses the .env file and returns the configuration as an object.
-//  * @returns {Object} The environment configuration.
-//  */
-// const readEnvConfig = () => {
-//   return readFileSync('.env', 'utf8')
-//     .split('\n')
-//     .reduce((obj, line) => {
-//       const [key, value] = line.split('=');
-//       if (key && value) obj[key.trim()] = value.trim();
-//       return obj;
-//     }, {});
-// };
-
-// /**
-//  * Saves the provided configuration to the .env file.
-//  * @param {Object} config - The configuration to save.
-//  */
-// const saveEnvConfig = (config) => {
-//   const updatedConfig = Object.entries(config)
-//     .map(([key, value]) => `${key}=${value}`)
-//     .join('\n');
-//   writeFileSync('.env', updatedConfig);
-// };
+const generateState = () => crypto.randomBytes(16).toString('hex');
 
 /**
- * Updates the .env file with new tokens and cloud ID.
- * @param {string} accessToken - The access token.
- * @param {string} refreshToken - The refresh token.
- * @param {number} expiresIn - The token expiration time in seconds.
- * @param {string} cloudId - The cloud ID.
+ * Constructs the authorization URL for OAuth authentication.
+ * @returns {string} The authorization URL.
  */
-const updateEnvConfig = (accessToken, refreshToken, expiresIn, cloudId) => {
-  const tokenExpirationTime = Date.now() + expiresIn * 1000;
-  const envConfig = readEnvConfig();
-  envConfig.ACCESS_TOKEN = accessToken;
-  envConfig.REFRESH_TOKEN = refreshToken;
-  envConfig.TOKEN_EXPIRATION_TIME = tokenExpirationTime.toString();
-  envConfig.CLOUD_ID = cloudId;
-  saveEnvConfig(envConfig);
+const constructAuthorizationUrl = () => {
+  const state = generateState();
+  return `${config.AUTHORIZATION_URL}?audience=api.atlassian.com&client_id=${
+    config.CLIENT_ID
+  }&scope=${encodeURIComponent(
+    'offline_access read:confluence-content.all read:confluence-user read:confluence-groups write:confluence-groups write:confluence-space write:confluence-content write:confluence-props read:confluence-content.permission read:confluence-content.summary'
+  )}&redirect_uri=${encodeURIComponent(
+    config.REDIRECT_URI
+  )}&state=${state}&response_type=code&prompt=consent`;
+};
+
+/**
+ * Parses JSON data and handles errors.
+ * @param {string} data - The JSON string to parse.
+ * @returns {Object} The parsed JSON object.
+ */
+const safeJsonParse = (data) => {
+  try {
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Failed to parse JSON:', error.message);
+    throw new Error('Failed to parse JSON response.');
+  }
 };
 
 /**
  * Handles the token response received from the OAuth server.
- * @param {Object} res - The response object.
+ * @param {Object} res - The HTTP response object.
  * @param {string} tokenData - The token data received from the server.
  * @param {Object} tokenRes - The token response object.
  */
 const handleTokenResponse = (res, tokenData, tokenRes) => {
   if (tokenRes.statusCode >= 200 && tokenRes.statusCode < 300) {
-    try {
-      const tokenResponse = JSON.parse(tokenData);
-      console.log('Token Response:', tokenResponse);
-      getCloudId(
-        tokenResponse.access_token,
-        tokenResponse.refresh_token,
-        tokenResponse.expires_in,
-        res
-      );
-    } catch (error) {
-      console.error('Failed to parse JSON response:', error.message);
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Failed to parse JSON response.');
-    }
+    const tokenResponse = safeJsonParse(tokenData);
+    console.log('Token Response:', tokenResponse);
+    getCloudId(
+      tokenResponse.access_token,
+      tokenResponse.refresh_token,
+      tokenResponse.expires_in,
+      res
+    );
   } else {
     console.error(
       'Failed to retrieve access token:',
@@ -103,7 +73,7 @@ const handleTokenResponse = (res, tokenData, tokenRes) => {
  * @param {string} accessToken - The access token.
  * @param {string} refreshToken - The refresh token.
  * @param {number} expiresIn - The token expiration time in seconds.
- * @param {Object} res - The response object.
+ * @param {Object} res - The HTTP response object.
  */
 const getCloudId = (accessToken, refreshToken, expiresIn, res) => {
   const options = {
@@ -123,18 +93,12 @@ const getCloudId = (accessToken, refreshToken, expiresIn, res) => {
     });
     cloudRes.on('end', () => {
       if (cloudRes.statusCode >= 200 && cloudRes.statusCode < 300) {
-        try {
-          const cloudResponse = JSON.parse(cloudData);
-          console.log('Cloud Response:', cloudResponse);
-          const cloudId = cloudResponse[0].id; // Assuming the first entry is the required cloud ID
-          updateEnvConfig(accessToken, refreshToken, expiresIn, cloudId);
-          res.writeHead(200, { 'Content-Type': 'text/plain' });
-          res.end('OAuth flow completed. You can now close this window.');
-        } catch (error) {
-          console.error('Failed to parse JSON response:', error.message);
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('Failed to parse JSON response.');
-        }
+        const cloudResponse = safeJsonParse(cloudData);
+        console.log('Cloud Response:', cloudResponse);
+        const cloudId = cloudResponse[0].id;
+        updateEnvConfig(accessToken, refreshToken, expiresIn, cloudId);
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('OAuth flow completed. You can now close this window.');
       } else {
         console.error(
           'Failed to retrieve cloud ID:',
@@ -164,51 +128,65 @@ const createServer = () => {
       console.log(`Received request for: ${reqUrl.pathname}`);
 
       if (reqUrl.pathname === '/oauth/callback' && reqUrl.query.code) {
-        const { code } = reqUrl.query;
-        const postData = JSON.stringify({
-          grant_type: 'authorization_code',
-          client_id: config.CLIENT_ID,
-          client_secret: config.CLIENT_SECRET,
-          code,
-          redirect_uri: config.REDIRECT_URI,
-        });
-
-        const options = {
-          hostname: 'auth.atlassian.com',
-          path: '/oauth/token',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        };
-
-        const tokenReq = https.request(options, (tokenRes) => {
-          let tokenData = '';
-          tokenRes.on('data', (chunk) => {
-            tokenData += chunk;
-          });
-          tokenRes.on('end', () => {
-            handleTokenResponse(res, tokenData, tokenRes);
-          });
-        });
-
-        tokenReq.on('error', (e) => {
-          console.error(`Problem with token request: ${e.message}`);
-        });
-
-        tokenReq.write(postData);
-        tokenReq.end();
+        handleOAuthCallback(req, res, reqUrl.query.code);
       } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');
       }
     })
     .listen(config.PORT, () => {
-      console.log(`Server started on http://localhost${config.PORT}`);
-      exec(`start "" "${authorizationUrl}"`, (error) => {
-        if (error) console.error(`Could not open browser: ${error.message}`);
-      });
+      console.log(`Server started on http://localhost:${config.PORT}`);
+      openAuthorizationUrl();
     });
+};
+
+/**
+ * Handles OAuth callback by exchanging authorization code for tokens.
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} res - The HTTP response object.
+ * @param {string} code - The authorization code.
+ */
+const handleOAuthCallback = (req, res, code) => {
+  const postData = JSON.stringify({
+    grant_type: 'authorization_code',
+    client_id: config.CLIENT_ID,
+    client_secret: config.CLIENT_SECRET,
+    code,
+    redirect_uri: config.REDIRECT_URI,
+  });
+
+  const options = {
+    hostname: 'auth.atlassian.com',
+    path: '/oauth/token',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  };
+
+  const tokenReq = https.request(options, (tokenRes) => {
+    let tokenData = '';
+    tokenRes.on('data', (chunk) => {
+      tokenData += chunk;
+    });
+    tokenRes.on('end', () => {
+      handleTokenResponse(res, tokenData, tokenRes);
+    });
+  });
+
+  tokenReq.on('error', (e) => {
+    console.error(`Problem with token request: ${e.message}`);
+  });
+
+  tokenReq.write(postData);
+  tokenReq.end();
+};
+
+/**
+ * Opens the authorization URL in the default web browser.
+ */
+const openAuthorizationUrl = () => {
+  exec(`start "" "${constructAuthorizationUrl()}"`, (error) => {
+    if (error) console.error(`Could not open browser: ${error.message}`);
+  });
 };
 
 // Start the server
