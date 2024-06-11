@@ -1,3 +1,4 @@
+import { printPages } from './utils/printPageDatautils.mjs';
 import { makeApiRequest } from './utils/request.mjs';
 
 /**
@@ -19,8 +20,9 @@ export const fetchPageById = async (id) => {
       `/wiki/rest/api/content?${queryParams}`,
       'GET'
     );
-    console.log('Fetched page:', response);
-    return response;
+
+    printPages(response.results);
+    return response.results;
   } catch (error) {
     console.error('Error fetching page:', error.message);
   }

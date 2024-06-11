@@ -82,7 +82,7 @@ export const makeApiRequest = async (
         });
 
         res.on('end', () => {
-          console.log('API response:', res.statusCode, responseData);
+          // console.log('API response:', res.statusCode, responseData);
           if (res.statusCode === 401) {
             reject(new Error('Unauthorized'));
           } else if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -123,8 +123,8 @@ export const makeApiRequest = async (
     return await requestApi();
   } catch (error) {
     if (error.message === 'Unauthorized') {
-      console.log('Retrying with refreshed token...');
-      options.headers.Authorization = `Bearer ${config.ACCESS_TOKEN}`;
+      // console.log('Retrying with refreshed token...');
+      // options.headers.Authorization = `Bearer ${config.ACCESS_TOKEN}`;
       return await requestApi();
     } else {
       throw error;
