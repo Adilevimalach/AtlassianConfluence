@@ -1,14 +1,16 @@
 import { makeApiRequest } from './utils/request.mjs';
 
 /**
- * Fetches all pages from the Confluence API.
- * @returns {Promise<void>} A promise that resolves when all pages are fetched.
+ * Fetches all pages from the Confluence API .
+ * (opitonial)set the spaceKey to {spacekey} to fetch all pages from the {namespace} space.
+ * @param {string} spaceKey - The key of the space to fetch pages from.
+ * @returns {Promise<void>} - A promise that resolves when all pages are fetched.
  */
-const fetchAllPages = async () => {
+const fetchAllPages = async (spaceKey = '') => {
   try {
     const queryParams = new URLSearchParams({
       type: 'page',
-      spaceKey: 'APPINT',
+      spaceKey: spaceKey,
       status: 'current',
       expand: 'space,history,version',
       start: 0,

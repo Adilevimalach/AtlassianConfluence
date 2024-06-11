@@ -9,9 +9,16 @@ import { makeApiRequest } from './utils/request.mjs';
  * @throws {Error} If there is an error fetching the page.
  */
 export const fetchPageById = async (id) => {
-  const path = `/wiki/rest/api/content/${id}`;
   try {
-    const response = await makeApiRequest(path);
+    const queryParams = new URLSearchParams({
+      type: 'page',
+      id: id,
+    }).toString();
+
+    const response = await makeApiRequest(
+      `/wiki/rest/api/content?${queryParams}`,
+      'GET'
+    );
     console.log('Fetched page:', response);
     return response;
   } catch (error) {
@@ -27,6 +34,7 @@ if (!pageId) {
   console.error('Please provide a page ID as an argument');
   process.exit(1);
 }
+
 /**
  * node fetchPageById.mjs {YOUR_PAGE_ID}
  * Call the fetch function with the provided page ID

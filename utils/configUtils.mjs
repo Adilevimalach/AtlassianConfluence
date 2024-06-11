@@ -1,4 +1,6 @@
 import fs from 'fs';
+import { config } from '../config.mjs';
+import https from 'https';
 
 /**
  * Saves the provided configuration to the .env file.
