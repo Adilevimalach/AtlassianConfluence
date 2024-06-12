@@ -59,7 +59,10 @@ export const makeApiRequest = async (
   path,
   method = 'GET',
   data = null,
-  headers = {}
+  headers = {
+    authorization: `Bearer ${config.ACCESS_TOKEN}`,
+    'Content-Type': 'application/json',
+  }
 ) => {
   if (isAccessTokenExpired()) {
     console.log('Access token expired. Refreshing token...');
@@ -82,11 +85,11 @@ export const makeApiRequest = async (
         });
 
         res.on('end', () => {
-          // console.log('API response:', res.statusCode, responseData);
           if (res.statusCode === 401) {
             reject(new Error('Unauthorized'));
           } else if (res.statusCode >= 200 && res.statusCode < 300) {
             if (
+              responseData &&
               res.headers['content-type'] &&
               res.headers['content-type'].includes('application/json')
             ) {
@@ -99,7 +102,11 @@ export const makeApiRequest = async (
                 );
               }
             } else {
-              resolve(responseData);
+              resolve({
+                statusCode: res.statusCode,
+                statusMessage: res.statusMessage,
+                data: responseData,
+              });
             }
           } else {
             reject(new Error('Request failed: ' + responseData));
@@ -123,8 +130,6 @@ export const makeApiRequest = async (
     return await requestApi();
   } catch (error) {
     if (error.message === 'Unauthorized') {
-      // console.log('Retrying with refreshed token...');
-      // options.headers.Authorization = `Bearer ${config.ACCESS_TOKEN}`;
       return await requestApi();
     } else {
       throw error;

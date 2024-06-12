@@ -11,6 +11,10 @@ const fetchAllPages = async (spaceKey) => {
   try {
     const queryParams = new URLSearchParams({
       type: 'page',
+      status: 'current',
+      expand: 'version',
+      start: 0,
+      limit: 25,
     });
     if (spaceKey) {
       queryParams.append('spaceKey', spaceKey);
@@ -21,6 +25,7 @@ const fetchAllPages = async (spaceKey) => {
       `/wiki/rest/api/content?${queryParamsString}`,
       'GET'
     );
+    console.log(response.results);
     printPages(response.results);
   } catch (error) {
     console.error('Error fetching pages:', error);

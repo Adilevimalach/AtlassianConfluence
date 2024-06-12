@@ -14,15 +14,16 @@ export const fetchPageById = async (id) => {
     const queryParams = new URLSearchParams({
       type: 'page',
       id: id,
+      expand: 'version',
     }).toString();
 
     const response = await makeApiRequest(
       `/wiki/rest/api/content?${queryParams}`,
       'GET'
     );
-
+    console.log('Fetched data', response.results[0]);
     printPages(response.results);
-    return response.results;
+    return response.results[0];
   } catch (error) {
     console.error('Error fetching page:', error.message);
   }

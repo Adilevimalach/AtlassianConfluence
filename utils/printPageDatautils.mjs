@@ -10,6 +10,7 @@ export const printPages = (pages) => {
     output += `Type: ${page.type}\n`;
     output += `Status: ${page.status}\n`;
     output += `Title: ${page.title}\n`;
+    output += `Version: ${page.version.number}\n`;
     output += '---\n';
   });
   console.log(output);
