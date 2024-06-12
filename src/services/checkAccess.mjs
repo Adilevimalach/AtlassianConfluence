@@ -1,3 +1,4 @@
+// This script checks the accessible resources and scopes for the app using the access token.
 import https from 'https';
 import { config } from '../config.mjs';
 

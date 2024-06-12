@@ -1,3 +1,4 @@
+// Code to fetch a page by its ID.
 import { printPages } from '../utils/printPageDatautils.mjs';
 import { makeApiRequest } from '../utils/request.mjs';
 import { constructExpandParam } from '../utils/helpers.mjs';
@@ -26,18 +27,3 @@ export const fetchPageById = async (id) => {
     console.error('Error fetching page:', error.message);
   }
 };
-
-// Get the page ID from command line arguments
-const args = process.argv.slice(2);
-const pageId = args[0];
-
-if (!pageId) {
-  console.error('Please provide a page ID as an argument');
-  process.exit(1);
-}
-
-/**
- * node fetchPageById.mjs {YOUR_PAGE_ID}[add expand data to the env if needed]
- * Call the fetch function with the provided page ID and optional expand fields
- */
-fetchPageById(pageId);

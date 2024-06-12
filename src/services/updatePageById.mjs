@@ -1,3 +1,4 @@
+// This module updates a Confluence page by its ID.
 import { makeApiRequest } from '../utils/request.mjs';
 import { fetchPageById } from './fetchPageById.mjs';
 
@@ -46,16 +47,3 @@ export const updatePageById = async (pageId, title, bodyContent) => {
     console.error('Error updating page:', error.message);
   }
 };
-
-// Validate command line arguments and update the page
-const args = process.argv.slice(2);
-const [pageId, title, bodyContent] = args;
-
-if (!pageId || !title || !bodyContent) {
-  console.error(
-    'Please provide all required arguments: pageId, title, bodyContent'
-  );
-  process.exit(1);
-}
-
-updatePageById(pageId, title, bodyContent);

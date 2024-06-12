@@ -9,7 +9,7 @@ import { makeApiRequest } from '../utils/request.mjs';
  * @returns {Promise<void>} A Promise that resolves when the page is deleted.
  * @throws {Error} If there is an error deleting the page.
  */
-const deletePageById = async (pageId) => {
+export const deletePageById = async (pageId) => {
   try {
     const path = `/wiki/rest/api/content/${pageId}`;
     const response = await makeApiRequest(path, 'DELETE');
@@ -25,15 +25,3 @@ const deletePageById = async (pageId) => {
     console.error('Error deleting page:', error.message);
   }
 };
-
-// Get the command line arguments
-const args = process.argv.slice(2);
-const pageId = args[0];
-
-if (!pageId) {
-  console.error('Please provide a page ID as an argument');
-  process.exit(1);
-}
-
-// Call the delete function with the provided page ID
-deletePageById(pageId);
