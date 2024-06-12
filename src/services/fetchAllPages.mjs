@@ -25,7 +25,6 @@ export const fetchAllPages = async (
     const queryParamsString = queryParams.toString();
     const expandParam = constructExpandParam();
     const url = `/wiki/rest/api/content?${queryParamsString}&${expandParam}`;
-
     const response = await makeApiRequest(url, 'GET');
     return response.results;
   } catch (error) {

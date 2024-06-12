@@ -7,7 +7,7 @@ import { config } from '../config.mjs';
  *
  * @returns {Promise} A promise that resolves with the response data.
  */
-const checkAccessibleResources = () => {
+export const checkAccessibleResources = () => {
   const options = {
     hostname: 'api.atlassian.com',
     path: '/oauth/token/accessible-resources',
@@ -30,22 +30,7 @@ const checkAccessibleResources = () => {
         console.log(`Response: ${res.statusCode} ${res.statusMessage}`);
         console.log('Response Headers:', res.headers);
         console.log('Response Body:', responseData);
-
-        if (res.statusCode === 204) {
-          resolve('No content');
-        } else if (
-          res.headers['content-type'] &&
-          res.headers['content-type'].includes('application/json')
-        ) {
-          try {
-            const jsonResponse = JSON.parse(responseData);
-            resolve(jsonResponse);
-          } catch (error) {
-            reject(new Error('Failed to parse JSON response: ' + responseData));
-          }
-        } else {
-          resolve(responseData);
-        }
+        return resolve(responseData);
       });
     });
 
@@ -57,11 +42,11 @@ const checkAccessibleResources = () => {
   });
 };
 
-// Call the function to check accessible resources
-checkAccessibleResources()
-  .then((response) => {
-    console.log('Accessible Resources:', response);
-  })
-  .catch((error) => {
-    console.error('Error Checking Accessible Resources:', error);
-  });
+// // Call the function to check accessible resources
+// checkAccessibleResources()
+//   .then((response) => {
+//     console.log('Accessible Resources:', response);
+//   })
+//   .catch((error) => {
+//     console.error('Error Checking Accessible Resources:', error);
+//   });

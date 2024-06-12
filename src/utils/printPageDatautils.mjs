@@ -1,73 +1,33 @@
-// src/utils/printPageDataUtils.mjs
+// handles the printing of page data
 
 /**
- * Prints the page ID.
- * @param {Object} page - The page object.
- * @returns {string} The formatted page ID string.
+ * Recursively prints all properties of an object.
+ * @param {Object} obj - The object to print.
+ * @param {string} [prefix=''] - The prefix for nested properties.
+ * @returns {string} - The formatted string of properties.
  */
-const printPageId = (page) => `ID: ${page.id}\n`;
+const printProperties = (obj, prefix = '') => {
+  let output = '';
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'object' && value !== null) {
+      output += `${prefix}${key}:\n`;
+      output += printProperties(value, `${prefix}  `);
+    } else {
+      output += `${prefix}${key}: ${value}\n`;
+    }
+  }
+  return output;
+};
 
 /**
- * Prints the page type.
- * @param {Object} page - The page object.
- * @returns {string} The formatted page type string.
+ * Prints page details including all nested properties.
+ * @param {Object} page - The page object to print.
  */
-const printPageType = (page) => `Type: ${page.type}\n`;
-
-/**
- * Prints the page status.
- * @param {Object} page - The page object.
- * @returns {string} The formatted page status string.
- */
-const printPageStatus = (page) => `Status: ${page.status}\n`;
-
-/**
- * Prints the page title.
- * @param {Object} page - The page object.
- * @returns {string} The formatted page title string.
- */
-const printPageTitle = (page) => `Title: ${page.title}\n`;
-
-/**
- * Prints the page version.
- * @param {Object} page - The page object.
- * @returns {string} The formatted page version string.
- */
-const printPageVersion = (page) =>
-  page.version ? `Version: ${page.version.number}\n` : '';
-
-/**
- * Prints the page metadata.
- * @param {Object} page - The page object.
- * @returns {string} The formatted page metadata string.
- */
-const printPageMetadata = (page) =>
-  page.metadata ? `Metadata: ${JSON.stringify(page.metadata)}\n` : '';
-
-/**
- * Prints the expandable fields.
- * @param {Object} page - The page object.
- * @returns {string} The formatted expandable fields string.
- */
-const printExpandableFields = (page) =>
-  page._expandable ? `Expandable: ${JSON.stringify(page._expandable)}\n` : '';
-
-/**
- * Prints page details.
- * @param {Array} pages - The pages to print.
- */
-export const printPages = (pages) => {
-  let output = `Fetched ${pages.length} pages:\n`;
-  pages.forEach((page, index) => {
-    output += `Page ${index + 1}:\n`;
-    output += printPageId(page);
-    output += printPageType(page);
-    output += printPageStatus(page);
-    output += printPageTitle(page);
-    output += printPageVersion(page);
-    output += printPageMetadata(page);
-    output += printExpandableFields(page);
-    output += '---\n';
-  });
-  console.log(output);
+export const printPageDetails = (page) => {
+  if (!page || typeof page !== 'object') {
+    console.error('Invalid page object');
+    return;
+  }
+  const pageInfo = printProperties(page);
+  console.log(pageInfo);
 };

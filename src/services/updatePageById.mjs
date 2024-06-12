@@ -42,7 +42,7 @@ export const updatePageById = async (pageId, title, bodyContent) => {
 
     // Update the page with the new content
     const response = await makeApiRequest(path, 'PUT', bodyData);
-    console.log('Updated page response:', JSON.stringify(response, null, 2));
+    return response;
   } catch (error) {
     console.error('Error updating page:', error.message);
   }

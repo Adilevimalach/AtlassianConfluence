@@ -13,14 +13,7 @@ export const deletePageById = async (pageId) => {
   try {
     const path = `/wiki/rest/api/content/${pageId}`;
     const response = await makeApiRequest(path, 'DELETE');
-    console.log('Delete page response:', response);
-    if (response.statusCode === 204) {
-      console.log(`Page with ID ${pageId} deleted successfully.`);
-    } else {
-      console.log(
-        `Failed to delete page. Status: ${response.statusCode} ${response.statusMessage}`
-      );
-    }
+    return response;
   } catch (error) {
     console.error('Error deleting page:', error.message);
   }

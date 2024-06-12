@@ -1,9 +1,11 @@
+// main file to run the appropriate operation based on command-line arguments
 import { fetchPageById } from './services/fetchPageById.mjs';
 import { updatePageById } from './services/updatePageById.mjs';
 import { fetchByUpDate } from './services/fetchByUpDate.mjs';
 import { deletePageById } from './services/deletePageById.mjs';
 import { fetchAllPages } from './services/fetchAllPages.mjs';
-import { printPages } from '../utils/printPageDatautils.mjs';
+import { printPageDetails } from './utils/printPageDatautils.mjs';
+import { checkAccessibleResources } from './utils/checkAccess.mjs';
 
 /**
  * Parses command-line arguments.
@@ -20,14 +22,13 @@ const parseArguments = () => {
  * @param {Array} params - The parameters for the fetch operation.
  */
 const handleFetchOperation = async (params) => {
-  console.log('Handling fetch operation with params:', params);
   const [pageId] = params;
   if (!pageId) {
     console.error('Please provide a page ID for the fetch operation.');
     process.exit(1);
   }
   const page = await fetchPageById(pageId);
-  printPages([page]);
+  printPageDetails(page);
 };
 
 /**
@@ -35,7 +36,6 @@ const handleFetchOperation = async (params) => {
  * @param {Array} params - The parameters for the update operation.
  */
 const handleUpdateOperation = async (params) => {
-  console.log('Handling update operation with params:', params);
   const [pageId, title, bodyContent] = params;
   if (!pageId || !title || !bodyContent) {
     console.error(
@@ -43,7 +43,8 @@ const handleUpdateOperation = async (params) => {
     );
     process.exit(1);
   }
-  await updatePageById(pageId, title, bodyContent);
+  const response = await updatePageById(pageId, title, bodyContent);
+  printPageDetails(response);
 };
 
 /**
@@ -51,7 +52,6 @@ const handleUpdateOperation = async (params) => {
  * @param {Array} params - The parameters for the fetch by update date operation.
  */
 const handleFetchByUpdateDateOperation = async (params) => {
-  console.log('Handling fetch by update date operation with params:', params);
   const [updateDate] = params;
   if (!updateDate) {
     console.error(
@@ -60,7 +60,7 @@ const handleFetchByUpdateDateOperation = async (params) => {
     process.exit(1);
   }
   const pageUpDated = await fetchByUpDate(updateDate);
-  printPages(pageUpDated);
+  printPageDetails(pageUpDated);
 };
 
 /**
@@ -68,12 +68,12 @@ const handleFetchByUpdateDateOperation = async (params) => {
  * @param {Array} params - The parameters for the delete operation.
  */
 const handleDeleteOperation = async (params) => {
-  console.log('Handling delete operation with params:', params);
   const [pageId] = params;
   if (!pageId) {
     process.exit(1);
   }
-  await deletePageById(pageId);
+  const response = await deletePageById(pageId);
+  printPageDetails(response);
 };
 
 /**
@@ -83,7 +83,11 @@ const handleDeleteOperation = async (params) => {
 const handleFetchAllPagesOperation = async (params) => {
   const spaceKey = params[0];
   const allPages = await fetchAllPages(spaceKey);
-  printPages(allPages);
+  printPageDetails(allPages);
+};
+
+const handleCheckAccess = async () => {
+  await checkAccessibleResources();
 };
 
 /**
@@ -107,6 +111,9 @@ const main = async () => {
     case 'fetchAll':
       await handleFetchAllPagesOperation(params);
       break;
+    case 'checkAccess':
+      await handleCheckAccess();
+      break;
     default:
       console.error(
         'Unknown operation. Please use "fetch", "update", "fetchByUpdateDate", "delete", or "fetchAll".'
@@ -119,5 +126,3 @@ main().catch((error) => {
   console.error('An error occurred:', error.message);
   process.exit(1);
 });
-
-// build test cases for the following functions, end to end and unit tests
