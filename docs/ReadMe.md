@@ -13,7 +13,7 @@ This project provides a set of Node.js scripts to interact with the Atlassian Co
 1.**Clone the repository:**
 
 ```bash
-git clone https://github.com/your-username/confluence-api-integration.git
+git clone https://github.com/Adilevimalach/AtlassianConfluence
 cd AtlassianConfluence
 ```
 
