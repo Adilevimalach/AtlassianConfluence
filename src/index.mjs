@@ -1,11 +1,13 @@
 // main file to run the appropriate operation based on command-line arguments
-import { fetchPageById } from './services/fetchPageById.mjs';
-import { updatePageById } from './services/updatePageById.mjs';
-import { fetchByUpDate } from './services/fetchByUpDate.mjs';
-import { deletePageById } from './services/deletePageById.mjs';
-import { fetchAllPages } from './services/fetchAllPages.mjs';
 import { printPageDetails } from './utils/printPageDatautils.mjs';
 import { checkAccessibleResources } from './utils/checkAccess.mjs';
+import {
+  fetchPageById,
+  fetchAllPages,
+  updatePageById,
+  fetchByUpDate,
+  deletePageById,
+} from './services/appServices.mjs';
 
 /**
  * Parses command-line arguments.
