@@ -2,7 +2,6 @@
 
 import fs from 'fs';
 import { config } from '../config.js';
-import https from 'https';
 
 /**
  * Saves the provided configuration to the .env file.
@@ -33,11 +32,11 @@ export const readEnvConfig = () => {
 };
 
 /**
- * Refreshes the access token using the refresh token.
- * @returns {Promise<void>} A promise that resolves when the token is refreshed.
+ * Refreshes the access token by making a request to the authentication server.
+ * @throws {Error} If there is a problem with the token refresh request.
  */
-export const refreshAccessToken = () => {
-  return new Promise((resolve, reject) => {
+export const refreshAccessToken = async () => {
+  try {
     const postData = JSON.stringify({
       grant_type: 'refresh_token',
       client_id: config.CLIENT_ID,
@@ -46,55 +45,40 @@ export const refreshAccessToken = () => {
     });
 
     const options = {
-      hostname: 'auth.atlassian.com',
-      path: '/oauth/token',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: postData,
     };
 
-    console.log('Refreshing access token...');
+    const response = await fetch(
+      'https://auth.atlassian.com/oauth/token',
+      options
+    );
+    const responseData = await response.json();
 
-    const req = https.request(options, (res) => {
-      let responseData = '';
+    if (!response.ok) {
+      throw new Error(
+        'Failed to refresh token: ' + responseData.error_description
+      );
+    }
 
-      res.on('data', (chunk) => {
-        responseData += chunk;
-      });
+    config.ACCESS_TOKEN = responseData.access_token;
+    config.REFRESH_TOKEN = responseData.refresh_token;
+    config.TOKEN_EXPIRATION_TIME = (
+      Date.now() +
+      responseData.expires_in * 1000
+    ).toString();
 
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          try {
-            const jsonResponse = JSON.parse(responseData);
-            config.ACCESS_TOKEN = jsonResponse.access_token;
-            config.REFRESH_TOKEN = jsonResponse.refresh_token;
-            config.TOKEN_EXPIRATION_TIME = (
-              Date.now() +
-              jsonResponse.expires_in * 1000
-            ).toString();
-            saveEnvConfig({
-              ACCESS_TOKEN: jsonResponse.access_token,
-              REFRESH_TOKEN: jsonResponse.refresh_token,
-              TOKEN_EXPIRATION_TIME: config.TOKEN_EXPIRATION_TIME,
-            });
-            resolve();
-          } catch (error) {
-            reject(new Error('Failed to parse JSON response: ' + responseData));
-          }
-        } else {
-          reject(new Error('Failed to refresh token: ' + responseData));
-        }
-      });
+    saveEnvConfig({
+      ACCESS_TOKEN: responseData.access_token,
+      REFRESH_TOKEN: responseData.refresh_token,
+      TOKEN_EXPIRATION_TIME: config.TOKEN_EXPIRATION_TIME,
     });
-
-    req.on('error', (e) => {
-      reject(new Error(`Problem with token refresh request: ${e.message}`));
-    });
-
-    req.write(postData);
-    req.end();
-  });
+  } catch (error) {
+    throw new Error('Problem with token refresh request: ' + error.message);
+  }
 };
 
 /**

@@ -1,5 +1,4 @@
 // main file to run the appropriate operation based on command-line arguments
-import { printPageDetails } from './utils/printPageDatautils.js';
 import { checkAccessibleResources } from './utils/checkAccess.js';
 import {
   fetchPageById,
@@ -30,7 +29,8 @@ const handleFetchOperation = async (params) => {
     process.exit(1);
   }
   const page = await fetchPageById(pageId);
-  printPageDetails(page);
+  const pageIdData = JSON.stringify(page);
+  console.log(`Page fetched: ${pageIdData}`);
 };
 
 /**
@@ -46,7 +46,8 @@ const handleUpdateOperation = async (params) => {
     process.exit(1);
   }
   const response = await updatePageById(pageId, title, bodyContent);
-  printPageDetails(response);
+  const updatePageResponse = JSON.stringify(response);
+  console.log(`Page updated: ${updatePageResponse}`);
 };
 
 /**
@@ -62,7 +63,8 @@ const handleFetchByUpdateDateOperation = async (params) => {
     process.exit(1);
   }
   const pageUpDated = await fetchByUpDate(updateDate);
-  printPageDetails(pageUpDated);
+  const pageUpDatedData = JSON.stringify(pageUpDated);
+  console.log(`Pages fetched: ${pageUpDatedData}`);
 };
 
 /**
@@ -75,7 +77,8 @@ const handleDeleteOperation = async (params) => {
     process.exit(1);
   }
   const response = await deletePageById(pageId);
-  printPageDetails(response);
+  const deletePageResponse = JSON.stringify(response);
+  console.log(`Page deleted: ${deletePageResponse}`);
 };
 
 /**
@@ -85,7 +88,8 @@ const handleDeleteOperation = async (params) => {
 const handleFetchAllPagesOperation = async (params) => {
   const spaceKey = params[0];
   const allPages = await fetchAllPages(spaceKey);
-  printPageDetails(allPages);
+  const allPagesData = JSON.stringify(allPages);
+  console.log(`Pages fetched: ${allPagesData}`);
 };
 
 const handleCheckAccess = async () => {

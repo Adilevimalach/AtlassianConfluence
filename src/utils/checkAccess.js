@@ -1,5 +1,5 @@
 // This script checks the accessible resources and scopes for the app using the access token.
-import https from 'https';
+import fetch from 'node-fetch';
 import { config } from '../config.js';
 
 /**
@@ -7,10 +7,9 @@ import { config } from '../config.js';
  *
  * @returns {Promise} A promise that resolves with the response data.
  */
-export const checkAccessibleResources = () => {
+export const checkAccessibleResources = async () => {
+  const url = 'https://api.atlassian.com/oauth/token/accessible-resources';
   const options = {
-    hostname: 'api.atlassian.com',
-    path: '/oauth/token/accessible-resources',
     method: 'GET',
     headers: {
       Authorization: `Bearer ${config.ACCESS_TOKEN}`,
@@ -18,35 +17,19 @@ export const checkAccessibleResources = () => {
     },
   };
 
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
-      let responseData = '';
-
-      res.on('data', (chunk) => {
-        responseData += chunk;
-      });
-
-      res.on('end', () => {
-        console.log(`Response: ${res.statusCode} ${res.statusMessage}`);
-        console.log('Response Headers:', res.headers);
-        console.log('Response Body:', responseData);
-        return resolve(responseData);
-      });
-    });
-
-    req.on('error', (e) => {
-      reject(new Error(`Problem with request: ${e.message}`));
-    });
-
-    req.end();
-  });
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(
+        `Request failed: ${response.status} ${response.statusText}`
+      );
+    }
+    const responseData = await response.json();
+    console.log(`Response: ${response.status} ${response.statusText}`);
+    console.log('Response Headers:', response.headers.raw());
+    console.log('Response Body:', responseData);
+    return responseData;
+  } catch (error) {
+    throw new Error(`Problem with request: ${error.message}`);
+  }
 };
-
-// // Call the function to check accessible resources
-// checkAccessibleResources()
-//   .then((response) => {
-//     console.log('Accessible Resources:', response);
-//   })
-//   .catch((error) => {
-//     console.error('Error Checking Accessible Resources:', error);
-//   });
