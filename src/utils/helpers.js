@@ -1,5 +1,5 @@
 // This file contains helper functions that are used in multiple places in the application.
-import { config } from '../config.mjs';
+import { config } from '../config.js';
 
 /**
  * Parses JSON data and handles errors.

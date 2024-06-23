@@ -1,5 +1,5 @@
-import { makeApiRequest } from '../utils/request.mjs';
-import { constructExpandParam, constructCQL } from '../utils/helpers.mjs';
+import { makeApiRequest } from '../utils/request.js';
+import { constructExpandParam, constructCQL } from '../utils/helpers.js';
 
 /**
  * Fetches all pages from the Confluence API .

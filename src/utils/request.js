@@ -1,12 +1,12 @@
 // Handles the request to the Atlassian Confluence API using OAuth2
 
 import https from 'https';
-import { refreshAccessToken } from './configUtils.mjs';
+import { refreshAccessToken } from './configUtils.js';
 import {
   safeJsonParse,
   isAccessTokenExpired,
   constructRequestOptions,
-} from './helpers.mjs';
+} from './helpers.js';
 
 /**
  * Sends the API request.

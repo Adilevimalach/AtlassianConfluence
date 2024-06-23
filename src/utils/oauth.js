@@ -3,11 +3,11 @@
 import http from 'http';
 import https from 'https';
 import url from 'url';
-import { config } from '../config.mjs';
+import { config } from '../config.js';
 import { exec } from 'child_process';
 import crypto from 'crypto';
-import { updateEnvConfig } from './configUtils.mjs';
-import { safeJsonParse } from './helpers.mjs';
+import { updateEnvConfig } from './configUtils.js';
+import { safeJsonParse } from './helpers.js';
 
 /**
  * Generates a secure random state value for OAuth authentication.

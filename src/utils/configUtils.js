@@ -1,7 +1,7 @@
 // This module contains utility functions for managing the configuration.
 
 import fs from 'fs';
-import { config } from '../config.mjs';
+import { config } from '../config.js';
 import https from 'https';
 
 /**
